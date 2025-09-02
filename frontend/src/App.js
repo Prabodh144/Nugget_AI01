@@ -39,7 +39,7 @@ function App() {
     const startTime = performance.now(); // start timer
 
     try {
-      const response = await fetch('/api/generate', {
+      const response = await fetch('https://nugget-ai01-backend.onrender.com/api/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,29 +56,9 @@ function App() {
         throw new Error(data.message || 'Failed to generate posts');
       }
 
-      // ✅ Parse backend's string output into multiple posts
-      let rawOutput = data.posts || data.output || [];
-      let splitPosts = [];
-
-      if (typeof rawOutput === "string") {
-        splitPosts = rawOutput
-          // Replace markers like **POST 1:**, POST_SEPARATOR, or --- with a split token
-          .replace(/\*\*POST\s*\d+:/gi, '|||')
-          .replace(/POST_SEPARATOR/gi, '|||')
-          .replace(/---/g, '|||')
-          .split('|||')
-          .map(chunk => chunk.trim())
-          .filter(Boolean);
-
-        // Convert into objects with content + hashtags
-        splitPosts = splitPosts.map(text => ({
-          content: text,
-          hashtags: (text.match(/#\w+/g) || [])
-        }));
-      } else {
-        splitPosts = rawOutput; // already array
-      }
-
+      // ✅ Use the posts directly from backend response (already properly formatted)
+      const splitPosts = data.posts || [];
+      
       setPosts(splitPosts);
     } catch (err) {
       setError(err.message);
@@ -220,7 +200,7 @@ function App() {
                     {post.content}
                   </div>
                   <div className="post-hashtags">
-                    {post.hashtags.map((hashtag, hashtagIndex) => (
+                    {post.hashtags && post.hashtags.map((hashtag, hashtagIndex) => (
                       <span key={hashtagIndex} className="hashtag">
                         {hashtag}
                       </span>
@@ -228,7 +208,7 @@ function App() {
                   </div>
                   <button
                     className="copy-btn"
-                    onClick={() => copyToClipboard(`${post.content}\n\n${post.hashtags.join(' ')}`)}
+                    onClick={() => copyToClipboard(`${post.content}\n\n${post.hashtags ? post.hashtags.join(' ') : ''}`)}
                   >
                     Copy Post
                   </button>
